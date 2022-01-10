@@ -1,7 +1,7 @@
 import scipy
 from scipy.stats import skew , kurtosis , norm 
 import numpy as np 
-from Metric_Generator.ratios import Sharpe_rat
+from TIPP_constructor.Metric_Generator.ratios import Sharpe_rat
 
 def estimated_sharpe_ratio_stdev(risk_returns,safe_asset,Rebalancement_frequency,Sharpe_Ratio):
 
