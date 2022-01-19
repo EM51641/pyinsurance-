@@ -58,7 +58,7 @@ class TIPP :
 
 
     @staticmethod
-    @njit(fastmath = True)
+    @njit
     def TPPI_calculator_MC(risk_return_mtx,floor_matrix , Reference_cap_matrix , Capital_reijection_matrix \
                           ,Fund_matrix ,Lock_in,floor_percent,Goal,multiplier,Min_risk_part,safe_asset\
                           ,Rebalancement_frequency,Capital_reinjection_rate) :

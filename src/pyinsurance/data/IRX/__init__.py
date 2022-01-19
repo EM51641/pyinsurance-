@@ -1,6 +1,6 @@
 from pandas import DataFrame
 
-from data.utility import load_file
+from TIPP_constructor.data.utility import load_file
 
 
 def load() -> DataFrame:
