@@ -16,6 +16,5 @@ def stdeviation(risk_returns,Rebalancement_frequency):
         float64, standard deviation 
 
         """
-
         stdev = np.std(risk_returns) * Rebalancement_frequency**.5
         return stdev

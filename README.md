@@ -37,7 +37,7 @@ safe_Asset = d1()/52  #we divided by 52 as we use weekly rates
 
 ```
 
-**Let's initalise our first insured portfolio now!**
+## **Let's initalise our first insured portfolio now!**
 
 For instance,we set our lock-in rate , minimum capital risk allocation , threshold for capital injection , allocate funds ,strategy's percentage floor ,multipler,benchmark returns and rebalancement cycle being respectively equal to :
 

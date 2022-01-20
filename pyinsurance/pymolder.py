@@ -1,5 +1,4 @@
 import numpy as np 
-import pandas as pd 
 import warnings
 from pyinsurance.Metric_Generator.ratios import Sharpe_rat , Sortino_rat , Omega_rat, Modigliani_rat,Information_rat
 from pyinsurance.Metric_Generator.returns_metrics import cagr , Cumulative_ret
@@ -90,6 +89,4 @@ class tipp_model:
         self.risk_returns_mtx , self.safe_asset_mtx , self.return_mtx  = TIPP(risk_returns,safe_asset,lock_in,\
                  Min_risk_part,Capital_reinjection_rate,Initial_funds\
                 ,floor_percent,multiplier,Rebalancement_frequency).tipp
-        pass 
-
 

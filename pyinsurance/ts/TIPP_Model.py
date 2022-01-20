@@ -1,7 +1,5 @@
 import numpy as np
-import numba 
-from numba import njit
-
+import numba as nb
 class TIPP :
     
     def __init__(self,risk_returns,safe_asset,Lock_in,\
@@ -42,14 +40,25 @@ class TIPP :
              ,Capital_reinjection_rate,Initial_funds ,floor_percent,multiplier\
              ,Rebalancement_frequency) :
 
+        if len(risk_returns) < 2 and len(safe_asset) < 2  : 
+            raise ValueError('More than 2 entries are required for each input')
+
         risk_return_mtx = risk_returns.values.reshape(-1)
         safe_asset_mtx = safe_asset.values.reshape(-1)
+        
+        if safe_asset_mtx.size != risk_return_mtx : 
+            raise ValueError('x and y must be of the same length')
+
         floor_cap,Goal = self.initiate_funds(risk_return_mtx,safe_asset_mtx,Initial_funds,Rebalancement_frequency,floor_percent)
         floor_matrix , Reference_cap_matrix , Capital_reijection_matrix , Fund_matrix = self.Matrix_Preparation(risk_return_mtx,safe_asset_mtx,floor_cap,Initial_funds)
-        Fund_matrix , floor_matrix , Capital_reijection_matrix , Reference_cap_matrix,return_mtx = self.TPPI_calculator_MC(risk_return_mtx,floor_matrix , Reference_cap_matrix \
-                                                                                                                ,Capital_reijection_matrix,Fund_matrix ,Lock_in \
-                                                                                                                ,floor_percent,Goal,multiplier,Min_risk_part,safe_asset_mtx\
-                                                                                                                ,Rebalancement_frequency,Capital_reinjection_rate)
+
+        try :
+            Fund_matrix , floor_matrix , Capital_reijection_matrix , Reference_cap_matrix,return_mtx = self.TPPI_calculator_MC(risk_return_mtx,floor_matrix , Reference_cap_matrix \
+                                                                                                            ,Capital_reijection_matrix,Fund_matrix ,Lock_in \
+                                                                                                            ,floor_percent,Goal,multiplier,Min_risk_part,safe_asset_mtx\
+                                                                                                            ,Rebalancement_frequency,Capital_reinjection_rate)
+        except : 
+            raise ValueError('Cannot divide by 0')
 
         return Fund_matrix , floor_matrix , Capital_reijection_matrix ,\
                 Reference_cap_matrix,risk_return_mtx[1:],safe_asset_mtx[1:], return_mtx
@@ -57,7 +66,7 @@ class TIPP :
 
 
     @staticmethod
-    @njit
+    @nb.njit
     def TPPI_calculator_MC(risk_return_mtx,floor_matrix , Reference_cap_matrix , Capital_reijection_matrix \
                           ,Fund_matrix ,Lock_in,floor_percent,Goal,multiplier,Min_risk_part,safe_asset\
                           ,Rebalancement_frequency,Capital_reinjection_rate) :
