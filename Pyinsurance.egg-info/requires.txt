@@ -1,7 +1,0 @@
-arch
-data
-matplotlib
-numpy
-pandas
-scipy
-statsmodels
