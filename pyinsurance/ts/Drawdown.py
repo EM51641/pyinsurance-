@@ -1,5 +1,5 @@
 import numpy as np 
-from TIPP_constructor.Metric_Generator.returns_metrics import Cumulative_ret
+from pyinsurance.Metric_Generator.returns_metrics import Cumulative_ret
 
 def Drawdown_function(risk_returns):
 

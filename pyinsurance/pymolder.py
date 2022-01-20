@@ -1,14 +1,14 @@
 import numpy as np 
-import warnings
-from TIPP_constructor.Metric_Generator.ratios import Sharpe_rat , Sortino_rat , Omega_rat, Modigliani_rat,Information_rat
-from TIPP_constructor.Metric_Generator.returns_metrics import cagr , Cumulative_ret
-from TIPP_constructor.Metric_Generator.Probabilistic_Sharpe_Ratio import probabilistic_sharpe_ratio
-from TIPP_constructor.Metric_Generator.Standard_dev import stdeviation
-from TIPP_constructor.Value_at_risk.Value_at_risk import VaR
-from TIPP_constructor.ts.tipp_constructor import TIPP
-from TIPP_constructor.ts.Drawdown import Drawdown_function
 import pandas as pd 
-from TIPP_constructor.Regressions.OLS_Basic import jensen_alpha_beta
+import warnings
+from pyinsurance.Metric_Generator.ratios import Sharpe_rat , Sortino_rat , Omega_rat, Modigliani_rat,Information_rat
+from pyinsurance.Metric_Generator.returns_metrics import cagr , Cumulative_ret
+from pyinsurance.Metric_Generator.Probabilistic_Sharpe_Ratio import probabilistic_sharpe_ratio
+from pyinsurance.Metric_Generator.Standard_dev import stdeviation
+from pyinsurance.Value_at_risk.Value_at_risk import VaR
+from pyinsurance.ts.TIPP_Model import TIPP
+from pyinsurance.ts.Drawdown import Drawdown_function
+from pyinsurance.Regressions.OLS_Basic import jensen_alpha_beta
 warnings.filterwarnings('ignore')
 
 class tipp_model:

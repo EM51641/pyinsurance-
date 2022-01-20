@@ -23,14 +23,14 @@ class TIPP :
 
     def initiate_funds(self,risk_returns_mtx,safe_asset_mtx,Initial_funds,Rebalancement_frequency,floor_percent) :
 
-        Goal = len(risk_returns_mtx) / Rebalancement_frequency   #This initiate the goal of xxx days of investment to today.
+        Goal = risk_returns_mtx.size / Rebalancement_frequency   #This initiate the goal of xxx days of investment to today.
         Actualizer = (1+safe_asset_mtx[0] * Rebalancement_frequency / 252)**Goal
         floor_cap = Initial_funds * floor_percent / Actualizer
         return floor_cap,Goal
 
 
     def Matrix_Preparation(self,risk_return_mtx,safe_asset_mtx,floor_cap,Initial_funds):
-        mtx= np.ones( len(risk_return_mtx) )
+        mtx= np.ones(risk_return_mtx.size)
         floor_matrix = mtx * floor_cap
         Reference_cap_matrix , Fund_matrix  = mtx * Initial_funds , mtx *  Initial_funds
         Capital_reijection_matrix  =np.zeros( len(risk_return_mtx) )
@@ -46,7 +46,6 @@ class TIPP :
         safe_asset_mtx = safe_asset.values.reshape(-1)
         floor_cap,Goal = self.initiate_funds(risk_return_mtx,safe_asset_mtx,Initial_funds,Rebalancement_frequency,floor_percent)
         floor_matrix , Reference_cap_matrix , Capital_reijection_matrix , Fund_matrix = self.Matrix_Preparation(risk_return_mtx,safe_asset_mtx,floor_cap,Initial_funds)
-
         Fund_matrix , floor_matrix , Capital_reijection_matrix , Reference_cap_matrix,return_mtx = self.TPPI_calculator_MC(risk_return_mtx,floor_matrix , Reference_cap_matrix \
                                                                                                                 ,Capital_reijection_matrix,Fund_matrix ,Lock_in \
                                                                                                                 ,floor_percent,Goal,multiplier,Min_risk_part,safe_asset_mtx\

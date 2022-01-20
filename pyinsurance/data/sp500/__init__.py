@@ -1,6 +1,6 @@
 from pandas import DataFrame
 
-from TIPP_constructor.data.utility import load_file
+from pyinsurance.data.utility import load_file
 
 
 def load() -> DataFrame:
@@ -12,4 +12,4 @@ def load() -> DataFrame:
     data : DataFrame
         Data set containing OHLC, adjusted close and the trading volume.
     """ 
-    return load_file(__file__, "SPX.csv.gz")
+    return load_file(__file__, "sp500.csv.gz")
