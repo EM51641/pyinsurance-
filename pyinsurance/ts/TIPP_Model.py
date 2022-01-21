@@ -46,7 +46,7 @@ class TIPP :
         risk_return_mtx = risk_returns.values.reshape(-1)
         safe_asset_mtx = safe_asset.values.reshape(-1)
         
-        if safe_asset_mtx.size != risk_return_mtx : 
+        if safe_asset_mtx.size != risk_return_mtx.size : 
             raise ValueError('x and y must be of the same length')
 
         floor_cap,Goal = self.initiate_funds(risk_return_mtx,safe_asset_mtx,Initial_funds,Rebalancement_frequency,floor_percent)
