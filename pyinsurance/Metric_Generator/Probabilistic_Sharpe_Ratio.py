@@ -21,7 +21,7 @@ def estimated_sharpe_ratio_stdev(risk_returns,safe_asset,Rebalancement_frequency
         """
 
         N = risk_returns.size
-        sk = scipy.stats.skey(risk_returns)
+        sk = scipy.stats.skew(risk_returns)
         kurt = scipy.stats.kurtosis(risk_returns)
         Sharpe_std = np.sqrt((1 + (0.5 * Sharpe_Ratio ** 2) - (sk * Sharpe_Ratio)\
                               + (((kurt - 3) / 4) * Sharpe_Ratio ** 2)) / (N - 1)) * Rebalancement_frequency

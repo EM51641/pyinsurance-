@@ -16,8 +16,9 @@ numpy        1.20.1
 scipy        1.6.2
 statsmodels  0.12.2
 numba        0.52.1
-data         0.4
-matplotlib   3.3.4
+setuptools   60.5.0
+pandas       1.2.4 
+pyvar        0.0.1
 ============ ========
 
 There is no dependency verification , so please, make sure to have
@@ -97,3 +98,22 @@ And our capital injections through the period are presented as:
 
 .. image:: https://raw.githubusercontent.com/EM51641/pyinsurance-/main/pictures/output2.png
 
+
+If you want to backtest the VaR, you can use the `varpy`_ library:
+
+.. _varpy: https://github.com/EM51641/VaRpy
+
+.. code:: python
+   import pyvar
+   from varpy.Backtester.bktst import Backtest
+   from varpy.Backtester.time_Significance import Testing
+   VaR , CVaR = Backtest(data, 500, 2, 0.05, model = 'EVT')
+
+
+   fig = plt.figure(figsize=(15,5))
+   plt.plot(data[500:])
+   plt.plot(VaR, label = 'VaR')
+   plt.plot(CVaR, label = 'CVaR')
+   plt.legend()
+   plt.show()
+.. image:: https://raw.githubusercontent.com/EM51641/pyinsurance-/main/pictures/output3.png

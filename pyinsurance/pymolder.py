@@ -4,7 +4,6 @@ from pyinsurance.Metric_Generator.ratios import Sharpe_rat , Sortino_rat , Omega
 from pyinsurance.Metric_Generator.returns_metrics import cagr , Cumulative_ret
 from pyinsurance.Metric_Generator.Probabilistic_Sharpe_Ratio import probabilistic_sharpe_ratio
 from pyinsurance.Metric_Generator.Standard_dev import stdeviation
-from pyinsurance.Value_at_risk.Value_at_risk import VaR
 from pyinsurance.ts.TIPP_Model import TIPP
 from pyinsurance.ts.Drawdown import Drawdown_function
 from pyinsurance.Regressions.OLS_Basic import jensen_alpha_beta
@@ -46,8 +45,6 @@ class tipp_model:
         self.CAGR = cagr(self.return_mtx,Rebalancement_frequency)
         
         self.Drawdown = Drawdown_function(self.return_mtx)
-        
-        self.Value_at_risk , self.Conditional_Value_at_risk = VaR(self.return_mtx, theta , Horizon)
         
         self.Modigliani_ratio = Modigliani_rat(self.return_mtx, self.Benchmark_returns,\
                                                 self.safe_asset_mtx, Rebalancement_frequency\
