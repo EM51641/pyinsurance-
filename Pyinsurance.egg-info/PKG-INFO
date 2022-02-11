@@ -1,3 +1,22 @@
+Metadata-Version: 2.1
+Name: Pyinsurance
+Version: 1.1.9
+Summary: Tools to backtest and create your own portfolio insurance strategy
+Home-page: https://github.com/EM51641/pyinsurance-
+Author: Elyes Mahjoubi
+Author-email: elyesmahjoubi@gmail.com
+License: MIT
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 2
+Classifier: Intended Audience :: Financial and Insurance Industry
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: !=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.5,>=3.4
+Description-Content-Type: text/x-rst
+License-File: LICENSE
+
 Create your own insured portfolio using several Tools.
 
 First ,To install, just use pip :
@@ -120,3 +139,5 @@ If you want to backtest the VaR, you can use the `varpy`_ library:
    plt.show()
    
 .. image:: https://raw.githubusercontent.com/EM51641/pyinsurance-/main/pictures/output3.png
+
+
