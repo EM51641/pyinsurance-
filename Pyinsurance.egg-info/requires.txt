@@ -1,6 +1,0 @@
-arch
-setuptools
-numpy
-pandas
-scipy
-statsmodels
