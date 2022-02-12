@@ -18,7 +18,6 @@ statsmodels  0.12.2
 numba        0.52.1
 setuptools   60.5.0
 pandas       1.2.4 
-pyvar        0.0.1
 ============ ========
 
 There is no dependency verification , so please, make sure to have
