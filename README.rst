@@ -20,7 +20,7 @@ setuptools   60.5.0
 pandas       1.2.4 
 ============ ========
 
-There is no dependency verification , so please, make sure to have
+There is no dependency verification, so please, make sure to have
 installed every required one before using the package.
 
 **Example**
