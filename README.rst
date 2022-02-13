@@ -104,7 +104,7 @@ If you want to backtest the VaR, you can use the `varpy`_ library:
 
 .. code:: python
 
-   import pyvar
+   import varpy
    from varpy.Backtester.bktst import Backtest
    from varpy.Backtester.time_Significance import Testing
    VaR , CVaR = Backtest(data, 500, 2, 0.05, model = 'EVT')
