@@ -23,6 +23,7 @@ pyinsurance/data/sp500/sp500.csv.gz
 pyinsurance/metrics/__init__.py
 pyinsurance/metrics/metrics.py
 pyinsurance/portfolio/__init__.py
+pyinsurance/portfolio/tipp_.c
 pyinsurance/portfolio/tipp_.pyx
 pyinsurance/portfolio/tipp__.py
 pyinsurance/stats/__init__.py

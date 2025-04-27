@@ -1,5 +1,6 @@
 import numpy as np
-from pyinsurance.portfolio.tipp_ import TIPP
+from pyinsurance.portfolio import TIPP
+import time
 
 # Example usage
 capital = 1000000.0
@@ -25,8 +26,16 @@ tipp = TIPP(
     freq=252,  # daily frequency
 )
 
-# Run the simulation
+# Run the simulation with timing
+start_time = time.time()
 tipp.run()
+end_time = time.time()
+
+# Print timing results
+print(f"Total execution time: {end_time - start_time:.4f} seconds")
+print(
+    f"Time per iteration: {(end_time - start_time) / n_periods * 1e6:.4f} microseconds"
+)
 
 # Access results
 print("Final portfolio value:", tipp.portfolio[-1])

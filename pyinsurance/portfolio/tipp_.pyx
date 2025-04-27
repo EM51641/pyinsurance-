@@ -1,9 +1,13 @@
 # cython: language_level=3
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: cdivision=True
+# cython: nonecheck=False
+# cython: initializedcheck=False
+
 import numpy as np
 cimport numpy as np
-from libc.math cimport fmax, fmin
+from libc.math cimport fmax, fmin, pow
 
 ctypedef np.float64_t DTYPE_t
 
@@ -27,7 +31,6 @@ cdef class TIPP:
         np.ndarray _portfolio
         np.ndarray _ref_capital
         np.ndarray _margin_trigger
-        np.ndarray _discount
         np.ndarray _floor
         DTYPE_t _compounded_period
 
@@ -45,13 +48,13 @@ cdef class TIPP:
     ):
         """Initialize TIPP model with parameters."""
 
-    #    # Validate that all rate parameters have the same length
-    #    cdef Py_ssize_t rr_len = rr.shape[0]
-    #    cdef Py_ssize_t rf_len = rf.shape[0]
-    #    cdef Py_ssize_t br_len = br.shape[0]
-    #    
-    #    if rr_len != rf_len or rr_len != br_len:
-    #        raise ValueError("All rate parameters must have the same length")
+        # Validate that all rate parameters have the same length
+        cdef Py_ssize_t rr_len = rr.shape[0]
+        cdef Py_ssize_t rf_len = rf.shape[0]
+        cdef Py_ssize_t br_len = br.shape[0]
+
+        if rr_len != rf_len or rr_len != br_len:
+            raise ValueError("All rate parameters must have the same length")
 
         self._capital = capital
         self._multiplier = multiplier
@@ -65,7 +68,6 @@ cdef class TIPP:
         self._portfolio = None
         self._ref_capital = None
         self._margin_trigger = None
-        self._discount = None
         self._floor = None
         self._compounded_period = self._rr.size / self._freq
 
@@ -94,73 +96,75 @@ cdef class TIPP:
         """Get the compounded period."""
         return self._compounded_period
 
-    @property
-    def discount(self):
-        """Get the discount array."""
-        return self._discount
-
     def run(self):
         """Run the TIPP strategy simulation."""
         cdef:
-            Py_ssize_t i
+            Py_ssize_t i, n
             DTYPE_t floor_cap, magnet, risk_allocation, risk_free_allocation
+            DTYPE_t[::1] rr_view = self._rr
+            DTYPE_t[::1] rf_view = self._rf
+            DTYPE_t[::1] portfolio_view
+            DTYPE_t[::1] ref_capital_view
+            DTYPE_t[::1] margin_trigger_view
+            DTYPE_t[::1] floor_view
+            DTYPE_t lock_in
+            DTYPE_t min_capital_req
+            DTYPE_t freq
+            DTYPE_t compounded_period
 
-        self._discount = (1 + self._rf * self._freq / 252) ** self._compounded_period
-        self._margin_trigger = np.zeros(self._rr.size, dtype=np.float64)
-        self._ref_capital = np.ones(self._rr.size, dtype=np.float64) * self._capital
-        self._portfolio = np.ones(self._rr.size, dtype=np.float64) * self._capital
-        self._floor = self._capital * self._min_capital_req / self._discount
+        n = self._rr.shape[0]
 
-        for i in range(1, self._portfolio.size):
-            if self._should_update_lock_in(i - 1):
-                self._ref_capital[i] = self._portfolio[i - 1]
+        # Get memoryviews for efficient access
+        portfolio_view = np.ones(n, dtype=np.float64) * self._capital
+        ref_capital_view = np.ones(n, dtype=np.float64) * self._capital
+        margin_trigger_view = np.zeros(n, dtype=np.float64)
+        floor_view = np.ones(n, dtype=np.float64) * (self._capital * self._min_capital_req)
+        compounded_period = n / self._freq
+        freq = self._freq
+        min_capital_req = self._min_capital_req
+        multiplier = self._multiplier
+        lock_in = self._lock_in
+        min_risk_req = self._min_risk_req
+
+        # Calculate discount factor once
+        discount_factor = pow(1 + rf_view[0] * freq / 252, compounded_period)
+        
+        for i in range(1, n):
+            # Update reference capital
+            if portfolio_view[i-1] >= (1 + lock_in) * ref_capital_view[i-1]:
+                ref_capital_view[i] = portfolio_view[i-1]
             else:
-                self._ref_capital[i] = self._ref_capital[i - 1]
+                ref_capital_view[i] = ref_capital_view[i-1]
 
-            floor_cap = self._portfolio[i - 1] * self._discount[i - 1]
-
-            if self._should_update_floor(floor_cap, i - 1):
-                self._floor[i] = floor_cap
+            # Update floor
+            floor_cap = portfolio_view[i-1] * discount_factor
+            if floor_cap > floor_view[i-1]:
+                floor_view[i] = floor_cap
             else:
-                self._floor[i] = self._floor[i - 1]
+                floor_view[i] = floor_view[i-1]
 
-            if self._should_inject_liquidity(i - 1):
-                capital_to_inject = (
-                    self._ref_capital[i - 1] * self._min_capital_req - self._portfolio[i - 1]
-                )
-                self._ref_capital[i] = self._ref_capital[i - 1] - capital_to_inject
-                self._portfolio[i - 1] += capital_to_inject
-                self._margin_trigger[i] = capital_to_inject
+            # Check for liquidity injection
+            if portfolio_view[i-1] < ref_capital_view[i-1] * min_capital_req:
+                capital_to_inject = ref_capital_view[i-1] * min_capital_req - portfolio_view[i-1]
+                ref_capital_view[i] = ref_capital_view[i-1] - capital_to_inject
+                portfolio_view[i-1] += capital_to_inject
+                margin_trigger_view[i] = capital_to_inject
 
-            magnet = self._portfolio[i - 1] - self._floor[i - 1]
-            risk_allocation = self._get_risk_allocation_mix(magnet, i - 1)
-            risk_free_allocation = self._portfolio[i - 1] - risk_allocation
-            self._portfolio[i] = self._update_portfolio_mix(
-                risk_allocation, risk_free_allocation, i
+            # Calculate allocations
+            magnet = portfolio_view[i-1] - floor_view[i-1]
+            risk_allocation = fmax(
+                fmin(multiplier * magnet, portfolio_view[i-1]),
+                min_risk_req * portfolio_view[i-1]
             )
-            self._compounded_period -= 1 / self._freq
+            risk_free_allocation = portfolio_view[i-1] - risk_allocation
+            
+            # Update portfolio
+            portfolio_view[i] = risk_allocation * (1 + rr_view[i]) + risk_free_allocation * (1 + rf_view[i])
+    
+            compounded_period -= 1 / freq
+            discount_factor = pow(1 + rf_view[i] * freq / 252, compounded_period)
 
-    cdef bint _should_update_lock_in(self, Py_ssize_t n):
-        """Check if reference capital should be updated based on lock-in condition."""
-        return self._portfolio[n] >= (1 + self._lock_in) * self._ref_capital[n]
-
-    cdef bint _should_update_floor(self, DTYPE_t floor_cap, Py_ssize_t n):
-        """Check if protection floor should be updated."""
-        return floor_cap > self._floor[n]
-
-    cdef bint _should_inject_liquidity(self, Py_ssize_t n):
-        """Check if liquidity injection is needed."""
-        return self._portfolio[n] < self._ref_capital[n] * self._min_capital_req
-
-    cdef DTYPE_t _get_risk_allocation_mix(self, DTYPE_t magnet, Py_ssize_t n):
-        """Calculate the risk allocation mix for the portfolio."""
-        return fmax(
-            fmin(self._multiplier * magnet, self._portfolio[n]),
-            self._min_risk_req * self._portfolio[n]
-        )
-
-    cdef DTYPE_t _update_portfolio_mix(self, DTYPE_t risk_alloc, 
-                                     DTYPE_t risk_free_alloc, 
-                                     Py_ssize_t n):
-        """Update portfolio value based on risk and risk-free allocations."""
-        return risk_alloc * (1 + self._rr[n]) + risk_free_alloc * (1 + self._rf[n]) 
+        self._portfolio = np.asarray(portfolio_view)
+        self._ref_capital = np.asarray(ref_capital_view)
+        self._margin_trigger = np.asarray(margin_trigger_view)
+        self._floor = np.asarray(floor_view)
