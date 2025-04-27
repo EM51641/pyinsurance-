@@ -1,6 +1,30 @@
 [build-system]
-requires = [
-    "setuptools >=54",
-    "wheel"
-]
+requires = ["setuptools>=61.0", "wheel", "Cython>=3.0.0", "numpy>=2.2.5"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyinsurance"
+version = "0.1.0"
+description = "Insurance portfolio management tools"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "cython>=3.0.12",
+    "numba>=0.61.2",
+    "numpy>=2.2.5",
+    "scipy>=1.15.2",
+    "statsmodels>=0.14.4",
+]
+
+[tool.setuptools]
+package-dir = {"pyinsurance" = "pyinsurance"}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pyinsurance*"]
+exclude = ["tests*", "docs*", "examples*"]
+
+[tool.cython]
+language_level = 3
+compiler_directives.boundscheck = false
+compiler_directives.wraparound = false

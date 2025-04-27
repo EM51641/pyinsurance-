@@ -1,0 +1,5 @@
+cython>=3.0.12
+numba>=0.61.2
+numpy>=2.2.5
+scipy>=1.15.2
+statsmodels>=0.14.4
