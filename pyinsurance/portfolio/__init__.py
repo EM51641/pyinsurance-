@@ -1,7 +1,13 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 try:
-    from .tipp_ import TIPP
+    from ._tipp import TIPP  # type: ignore
+
+    logger.info("TIPP module loaded")
 except ImportError:
     # If the Cython module isn't available, use the pure Python version
-    from .tipp__ import TIPP
+    from .tipp import TIPP
 
-__all__ = ["TIPP"]
+    logger.info("TIPP module not available, using pure Python version")

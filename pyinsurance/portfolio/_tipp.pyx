@@ -10,6 +10,7 @@ cimport numpy as np
 from libc.math cimport fmax, fmin, pow
 
 ctypedef np.float64_t DTYPE_t
+cdef np.float64_t OPEN_DAYS_PER_YEAR = 252.0
 
 cdef class TIPP:
     """Time Invariant Portfolio Protection (TIPP) implementation.
@@ -23,7 +24,6 @@ cdef class TIPP:
         DTYPE_t _multiplier
         np.ndarray _rr
         np.ndarray _rf
-        np.ndarray _br
         DTYPE_t _lock_in
         DTYPE_t _min_risk_req
         DTYPE_t _min_capital_req
@@ -40,7 +40,6 @@ cdef class TIPP:
         DTYPE_t multiplier,
         np.ndarray[DTYPE_t, ndim=1] rr,
         np.ndarray[DTYPE_t, ndim=1] rf,
-        np.ndarray[DTYPE_t, ndim=1] br,
         DTYPE_t lock_in,
         DTYPE_t min_risk_req,
         DTYPE_t min_capital_req,
@@ -51,16 +50,14 @@ cdef class TIPP:
         # Validate that all rate parameters have the same length
         cdef Py_ssize_t rr_len = rr.shape[0]
         cdef Py_ssize_t rf_len = rf.shape[0]
-        cdef Py_ssize_t br_len = br.shape[0]
 
-        if rr_len != rf_len or rr_len != br_len:
+        if rr_len != rf_len:
             raise ValueError("All rate parameters must have the same length")
 
         self._capital = capital
         self._multiplier = multiplier
         self._rr = rr
         self._rf = rf
-        self._br = br
         self._lock_in = lock_in
         self._min_risk_req = min_risk_req
         self._min_capital_req = min_capital_req
@@ -72,29 +69,48 @@ cdef class TIPP:
         self._compounded_period = self._rr.size / self._freq
 
     @property
-    def portfolio(self):
+    def portfolio(self) -> np.ndarray | None:
         """Get the portfolio value array."""
         return self._portfolio
 
     @property
-    def ref_capital(self):
+    def ref_capital(self) -> np.ndarray | None:
         """Get the reference capital array."""
         return self._ref_capital
 
     @property
-    def margin_trigger(self):
+    def margin_trigger(self) -> np.ndarray | None:
         """Get the margin trigger array."""
         return self._margin_trigger
 
     @property
-    def floor(self):
+    def floor(self) -> np.ndarray | None:
         """Get the floor array."""
         return self._floor
 
     @property
-    def compounded_period(self):
-        """Get the compounded period."""
-        return self._compounded_period
+    def min_risk_req(self) -> float | None:
+        return self._min_risk_req
+
+    @property
+    def min_capital_req(self) -> float | None:
+        return self._min_capital_req
+
+    @property
+    def lock_in(self) -> float | None:
+        return self._lock_in
+
+    @property
+    def multiplier(self) -> float | None:
+        return self._multiplier
+
+    @property
+    def rr(self) -> np.ndarray | None:
+        return self._rr
+
+    @property
+    def rf(self) -> np.ndarray | None:
+        return self._rf
 
     def run(self):
         """Run the TIPP strategy simulation."""
@@ -127,7 +143,7 @@ cdef class TIPP:
         min_risk_req = self._min_risk_req
 
         # Calculate discount factor once
-        discount_factor = pow(1 + rf_view[0] * freq / 252, compounded_period)
+        discount_factor = pow(1 + rf_view[0] * freq / OPEN_DAYS_PER_YEAR, compounded_period)
         
         for i in range(1, n):
             # Update reference capital
@@ -162,7 +178,7 @@ cdef class TIPP:
             portfolio_view[i] = risk_allocation * (1 + rr_view[i]) + risk_free_allocation * (1 + rf_view[i])
     
             compounded_period -= 1 / freq
-            discount_factor = pow(1 + rf_view[i] * freq / 252, compounded_period)
+            discount_factor = pow(1 + rf_view[i] * freq / OPEN_DAYS_PER_YEAR, compounded_period)
 
         self._portfolio = np.asarray(portfolio_view)
         self._ref_capital = np.asarray(ref_capital_view)

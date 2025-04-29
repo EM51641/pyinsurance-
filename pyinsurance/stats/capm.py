@@ -1,10 +1,12 @@
 from typing import Optional
-import statsmodels.api as sm
-import pandas as pd
+import statsmodels.api as sm  # type: ignore
 import numpy as np
 
 
 class CAPM:
+    """
+    Compute the Beta and alpha of the investment under the CAPM
+    """
 
     def __init__(self, rr: np.float64, br: np.float64, freq: float) -> None:
         self._rr = rr

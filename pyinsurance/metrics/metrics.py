@@ -1,20 +1,23 @@
 from typing import Optional
 import numpy as np
 import scipy
-from statsmodels.distributions.empirical_distribution import ECDF
+from statsmodels.distributions.empirical_distribution import ECDF  # type: ignore
 
 
 class Ratios:
+    """
+    Compute the ratios of the investment
+    """
 
     def __init__(
-        self, rr: np.float64, br: np.float64, rf: np.float64, freq: float
+        self, rr: np.ndarray, br: np.ndarray, rf: np.ndarray, freq: float
     ) -> None:
         self._rr = rr
         self._rf = rf
         self._br = br
         self._freq = freq
 
-    def sharp(self, ret: Optional[np.float64] = None) -> float:
+    def sharp(self, ret: Optional[np.ndarray] = None) -> float:
         if not ret:
             ret = self._rr
         er = np.mean(ret - self._rf)
@@ -22,6 +25,7 @@ class Ratios:
         return er / er_std
 
     def sortino(self) -> float:
+        a = np.where(self._rr > 0)
         sortino_std = np.std(self._rf[np.where(self._rr > 0)]) * self._freq**0.5
         er = np.mean(self._rr - self._rf)
         return er / sortino_std
@@ -61,14 +65,13 @@ class Ratios:
         return dd
 
     def _sharp_std(self):
-        N = self._rr.size
         sk = scipy.stats.skew(self._rr)
         kurt = scipy.stats.kurtosis(self._rr)
         sharp = self.sharp()
         return (
             np.sqrt(
                 (1 + (0.5 * sharp**2) - (sk * sharp) + (((kurt - 3) / 4) * sharp**2))
-                / (N - 1)
+                / (self._rr.size - 1)
             )
             * self._freq
         )

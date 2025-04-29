@@ -8,7 +8,7 @@ floor = 800000.0
 multiplier = 2.0
 
 # Create sample rate arrays (1 row, N columns)
-n_periods = 100000000  # e.g., daily data for a year
+n_periods = 10000000  # e.g., daily data for a year
 rr = np.random.normal(0, 0, (n_periods,))  # risky returns
 rf = np.full((n_periods,), 0.00000000000001)  # risk-free returns
 br = np.random.normal(0, 0, (n_periods,))  # benchmark returns
@@ -19,7 +19,6 @@ tipp = TIPP(
     multiplier=multiplier,
     rr=rr,
     rf=rf,
-    br=br,
     lock_in=0.1,  # 10% lock-in
     min_risk_req=0.2,  # minimum 20% in risky assets
     min_capital_req=0.8,  # maintain 80% of capital

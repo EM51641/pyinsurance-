@@ -1,10 +1,10 @@
-from setuptools import setup, Extension
+from setuptools import setup, Extension  # type: ignore
 import numpy as np
 
 extensions = [
     Extension(
-        "pyinsurance.portfolio.tipp_",
-        ["pyinsurance/portfolio/tipp_.pyx"],
+        "pyinsurance.portfolio._tipp",
+        ["pyinsurance/portfolio/_tipp.pyx"],
         include_dirs=[np.get_include()],
     ),
 ]

@@ -1,4 +1,8 @@
+from typing import Optional
 import numpy as np
+from numpy.typing import NDArray
+
+OPEN_DAYS_PER_YEAR = 252.0
 
 
 class TIPP:
@@ -9,17 +13,28 @@ class TIPP:
     while maintaining upside potential.
 
     Attributes:
-        params: TIPP model parameters
-        tipp: Tuple containing the TIPP model results
+        capital: Initial investment capital
+        multiplier: Risk multiplier that determines the aggressiveness of the strategy
+        rr: Return rate of the risky asset
+        rf: Risk-free rate of return
+        lock_in: Lock-in percentage for gains (0-1)
+        min_risk_req: Minimum risk requirement for the portfolio
+        min_capital_req: Minimum capital requirement for the portfolio
+        freq: Number of trading days per year
+        portfolio: Portfolio value at each time step
+        ref_capital: Reference capital at each time step
+        margin_trigger: Margin trigger at each time step
+        floor: Floor at each time step
+        compounded_period: Compounded period
+        discount: Discount at each time step
     """
 
     def __init__(
         self,
         capital: float,
         multiplier: float,
-        rr: np.float64,
-        rf: np.float64,
-        br: np.float64,
+        rr: NDArray[np.float64],
+        rf: NDArray[np.float64],
         lock_in: float,
         min_risk_req: float,
         min_capital_req: float,
@@ -32,9 +47,9 @@ class TIPP:
             capital (float): Initial investment capital
             floor (float): Minimum acceptable portfolio value (protection level)
             multiplier (float): Risk multiplier that determines the aggressiveness of the strategy
-            rr (np.float64): Return rate of the risky asset
-            rf (np.float64): Risk-free rate of return
-            br (np.float64): Benchmark return rate
+            rr (np.ndarray): Return rate of the risky asset
+            rf (np.ndarray): Risk-free rate of return
+            br (np.ndarray): Benchmark return rate
             lock_in (float): Lock-in percentage for gains (0-1)
             min_risk_req (float): Minimum risk requirement for the portfolio
             min_capital_req (float): Minimum capital requirement for the portfolio
@@ -48,82 +63,75 @@ class TIPP:
         """
 
         # Validate that all rate parameters have the same shape (1, N)
-        assert (
-            rr.shape == rf.shape == br.shape
-        ), "All rate parameters must have the same shape"
+        assert rr.shape == rf.shape, "All rate parameters must have the same shape"
         assert len(rr.shape) == 1, "Rate parameters must have shape (N,)"
 
         self._capital = capital
         self._multiplier = multiplier
         self._rr = rr
         self._rf = rf
-        self._br = br
         self._lock_in = lock_in
         self._min_risk_req = min_risk_req
         self._min_capital_req = min_capital_req
         self._freq = freq
-        self._portfolio = self._ref_capital = self._margin_trigger = self._floor = (
-            self._discount
-        ) = self._compounded_period = None
+
+        self._portfolio: Optional[NDArray[np.float64]] = None
+        self._ref_capital: Optional[NDArray[np.float64]] = None
+        self._margin_trigger: Optional[NDArray[np.float64]] = None
+        self._floor: Optional[NDArray[np.float64]] = None
 
     @property
-    def portfolio(self):
+    def portfolio(self) -> np.ndarray | None:
         return self._portfolio
 
     @property
-    def ref_capital(self):
+    def ref_capital(self) -> np.ndarray | None:
         return self._ref_capital
 
     @property
-    def margin_trigger(self):
+    def margin_trigger(self) -> np.ndarray | None:
         return self._margin_trigger
 
     @property
-    def floor(self):
+    def floor(self) -> np.ndarray | None:
         return self._floor
 
     @property
-    def compounded_period(self):
-        return self._compounded_period
-
-    @property
-    def discount(self):
-        return self._discount
-
-    @property
-    def min_risk_req(self):
+    def min_risk_req(self) -> float | None:
         return self._min_risk_req
 
     @property
-    def min_capital_req(self):
+    def min_capital_req(self) -> float | None:
         return self._min_capital_req
 
     @property
-    def lock_in(self):
+    def lock_in(self) -> float | None:
         return self._lock_in
 
     @property
-    def rr(self):
+    def rr(self) -> np.ndarray | None:
         return self._rr
 
     @property
-    def rf(self):
+    def rf(self) -> np.ndarray | None:
         return self._rf
 
-    @property
-    def br(self):
-        return self._br
-
-    def run(self):
+    def run(self) -> None:
         """Run the TIPP strategy.
 
         This method executes the TIPP strategy by dynamically adjusting the portfolio
         allocation between risky and safe assets based on market conditions. It updates
         the floor, lock-in, and portfolio values at each time step.
         """
-        self._compounded_period = self._rr.size / self._freq
-        self._discount = (1 + self._rf * self._freq / 252) ** self._compounded_period
-        self._floor = self._capital * self._min_capital_req / self._discount
+
+        compounded_period = self._rr.size / self._freq
+        discount = (
+            1 + np.float64(self._rf[0]) * self._freq / OPEN_DAYS_PER_YEAR
+        ) ** compounded_period
+
+        self._floor = (
+            np.ones(self._rr.size) * self._capital * self._min_capital_req / discount
+        )
         self._margin_trigger = np.zeros(self._rr.size)
         self._ref_capital = np.ones(self._rr.size) * self._capital
         self._portfolio = np.ones(self._rr.size) * self._capital
@@ -134,7 +142,7 @@ class TIPP:
             else:
                 self._ref_capital[i] = self._ref_capital[i - 1]
 
-            floor_cap = self._portfolio[i - 1] * self._discount[i - 1]
+            floor_cap = self._portfolio[i - 1] * discount
 
             if self._should_update_floor(floor_cap, i - 1):
                 self._floor[i] = floor_cap
@@ -156,22 +164,31 @@ class TIPP:
             self._portfolio[i] = self._update_portfolio_mix(
                 risk_allocation, risk_free_allocation, i
             )
-            self._compounded_period -= 1 / self._freq
+            compounded_period -= 1 / self._freq
+            discount = (
+                1 + np.float64(self._rf[i]) * self._freq / OPEN_DAYS_PER_YEAR
+            ) ** compounded_period
 
-    def _should_update_lock_in(self, n):
+    def _should_update_lock_in(self, n: int) -> bool:
+        assert self._portfolio is not None and self._ref_capital is not None
         return self._portfolio[n] >= (1 + self._lock_in) * self._ref_capital[n]
 
-    def _should_update_floor(self, floor_cap, n):
+    def _should_update_floor(self, floor_cap: float, n: int) -> bool:
+        assert self._floor is not None
         return floor_cap > self._floor[n]
 
-    def _should_inject_liquidity(self, n):
+    def _should_inject_liquidity(self, n: int) -> bool:
+        assert self._portfolio is not None and self._ref_capital is not None
         return self._portfolio[n] < self._ref_capital[n] * self._min_capital_req
 
-    def _get_risk_allocation_mix(self, magnet, n):
+    def _get_risk_allocation_mix(self, magnet: float, n: int) -> float:
+        assert self._portfolio is not None
         return max(
             min(self._multiplier * magnet, self._portfolio[n]),
             self._min_risk_req * self._portfolio[n],
         )
 
-    def _update_portfolio_mix(self, risk_alloc, risk_free_alloc, n):
+    def _update_portfolio_mix(
+        self, risk_alloc: float, risk_free_alloc: float, n: int
+    ) -> float:
         return risk_alloc * (1 + self._rr[n]) + risk_free_alloc * (1 + self._rf[n])
