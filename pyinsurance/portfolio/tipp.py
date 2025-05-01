@@ -20,7 +20,6 @@ class TIPP(TIPPBase):
         lock_in: Lock-in percentage for gains (0-1)
         min_risk_req: Minimum risk requirement for the portfolio
         min_capital_req: Minimum capital requirement for the portfolio
-        freq: Number of trading days per year
         portfolio: Portfolio value at each time step
         ref_capital: Reference capital at each time step
         margin_trigger: Margin trigger at each time step
@@ -37,26 +36,25 @@ class TIPP(TIPPBase):
         the floor, lock-in, and portfolio values at each time step.
         """
 
-        compounded_period = self._rr.size / self._freq
-        discount = (
-            1 + np.float64(self._rf[0]) * self._freq / OPEN_DAYS_PER_YEAR
-        ) ** compounded_period
+        compounded_period = self._rr.size / OPEN_DAYS_PER_YEAR
+        discount = (1 + np.float64(self._rf[0])) ** compounded_period
 
         self._floor = (
             np.ones(self._rr.size) * self._capital * self._min_capital_req / discount
         )
         self._margin_trigger = np.zeros(self._rr.size)
         self._ref_capital = np.ones(self._rr.size) * self._capital
-        self._portfolio = np.ones(self._rr.size) * self._capital
+        self._portfolio = self._initialise_portfolio()
 
         for i in range(1, self._portfolio.size):
+            compounded_period -= 1 / OPEN_DAYS_PER_YEAR
+            discount = (1 + np.float64(self._rf[i])) ** compounded_period
             if self._should_update_lock_in(i - 1):
                 self._ref_capital[i] = self._portfolio[i - 1]
             else:
                 self._ref_capital[i] = self._ref_capital[i - 1]
 
             floor_cap = self._portfolio[i - 1] * self._min_capital_req / discount
-            print(self._min_capital_req)
 
             if self._should_update_floor(floor_cap, i - 1):
                 self._floor[i] = floor_cap
@@ -68,9 +66,9 @@ class TIPP(TIPPBase):
                     self._ref_capital[i - 1] * self._min_capital_req
                     - self._portfolio[i - 1]
                 )
-                self._ref_capital[i - 1] = self._ref_capital[i - 1] - capital_to_inject
+                self._ref_capital[i] = self._ref_capital[i - 1] - capital_to_inject
                 self._portfolio[i - 1] += capital_to_inject
-                self._margin_trigger[i - 1] = capital_to_inject
+                self._margin_trigger[i] = capital_to_inject
 
             magnet = self._portfolio[i - 1] - self._floor[i - 1]
             risk_allocation = self._get_risk_allocation_mix(magnet, i - 1)
@@ -78,10 +76,13 @@ class TIPP(TIPPBase):
             self._portfolio[i] = self._update_portfolio_mix(
                 risk_allocation, risk_free_allocation, i
             )
-            compounded_period -= 1 / self._freq
-            discount = (
-                1 + np.float64(self._rf[i]) * self._freq / OPEN_DAYS_PER_YEAR
-            ) ** compounded_period
+
+    def _initialise_portfolio(self) -> np.ndarray:
+        return np.ones(self._rr.size) * self._capital * self._min_risk_req * (
+            1 + self._rr[0]
+        ) + self._capital * (1 - self._min_risk_req) * (1 + self._rf[0]) ** (
+            1 / OPEN_DAYS_PER_YEAR
+        )
 
     def _should_update_lock_in(self, n: int) -> bool:
         assert self._portfolio is not None and self._ref_capital is not None
@@ -105,4 +106,6 @@ class TIPP(TIPPBase):
     def _update_portfolio_mix(
         self, risk_alloc: float, risk_free_alloc: float, n: int
     ) -> float:
-        return risk_alloc * (1 + self._rr[n]) + risk_free_alloc * (1 + self._rf[n])
+        return risk_alloc * (1 + self._rr[n]) + risk_free_alloc * (1 + self._rf[n]) ** (
+            1 / OPEN_DAYS_PER_YEAR
+        )

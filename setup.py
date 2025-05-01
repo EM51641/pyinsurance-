@@ -2,6 +2,7 @@ import numpy as np
 from Cython.Build import cythonize  # type: ignore
 from setuptools import setup  # type: ignore
 
+# wrfw
 setup(
     ext_modules=cythonize(
         "pyinsurance/portfolio/_tipp.pyx",

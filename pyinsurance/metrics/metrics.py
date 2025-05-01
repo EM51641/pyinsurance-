@@ -26,7 +26,6 @@ class Metrics:
         return er / er_std
 
     def sortino(self) -> float:
-        a = np.where(self._rr > 0)
         sortino_std = np.std(self._rf[np.where(self._rr > 0)]) * self._freq**0.5
         er = np.mean(self._rr - self._rf)
         return er / sortino_std

@@ -17,7 +17,6 @@ class TIPPBase(ABC):
         lock_in: float,
         min_risk_req: float,
         min_capital_req: float,
-        freq: float = 252,
     ) -> None:
         """
         Initialize TIPP model with parameters.
@@ -32,7 +31,6 @@ class TIPPBase(ABC):
             lock_in (float): Lock-in percentage for gains (0-1)
             min_risk_req (float): Minimum risk requirement for the portfolio
             min_capital_req (float): Minimum capital requirement for the portfolio
-            freq (float, optional): Number of trading days per year. Defaults to 252.
 
         Note:
             The TIPP strategy dynamically adjusts the allocation between risky and safe assets
@@ -52,7 +50,6 @@ class TIPPBase(ABC):
         self._lock_in = lock_in
         self._min_risk_req = min_risk_req
         self._min_capital_req = min_capital_req
-        self._freq = freq
 
         self._portfolio: Optional[NDArray[np.float64]] = None
         self._ref_capital: Optional[NDArray[np.float64]] = None
@@ -99,6 +96,10 @@ class TIPPBase(ABC):
     def rf(self) -> np.ndarray:
         return self._rf
 
+    @property
+    def multiplier(self) -> float:
+        return self._multiplier
+
     @abstractmethod
     def run(self) -> None:
         """Run the TIPP strategy."""
@@ -114,7 +115,6 @@ class TIPPBase(ABC):
             Minimum risk requirement: {self._min_risk_req:.2%}
             Minimum capital requirement: {self._min_capital_req:.2%}
             Multiplier: {self._multiplier:.2f}
-            Frequency: {self._freq:.0f} days
             """.strip()
 
     def __repr__(self) -> str:
@@ -124,6 +124,5 @@ class TIPPBase(ABC):
             f"multiplier={self._multiplier:.2f}, "
             f"lock_in={self._lock_in:.2%}, "
             f"min_risk_req={self._min_risk_req:.2%}, "
-            f"min_capital_req={self._min_capital_req:.2%}, "
-            f"freq={self._freq:.0f})"
+            f"min_capital_req={self._min_capital_req:.2%})"
         )

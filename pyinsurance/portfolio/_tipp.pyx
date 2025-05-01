@@ -20,12 +20,10 @@ cdef class TIPP:
         DTYPE_t _lock_in
         DTYPE_t _min_risk_req
         DTYPE_t _min_capital_req
-        DTYPE_t _freq
         np.ndarray _portfolio
         np.ndarray _ref_capital
         np.ndarray _margin_trigger
         np.ndarray _floor
-        DTYPE_t _compounded_period
 
     def __init__(
         self,
@@ -35,8 +33,7 @@ cdef class TIPP:
         np.ndarray[DTYPE_t, ndim=1] rf,
         DTYPE_t lock_in,
         DTYPE_t min_risk_req,
-        DTYPE_t min_capital_req,
-        DTYPE_t freq=252
+        DTYPE_t min_capital_req
     ):
         """Initialize TIPP model with parameters."""
 
@@ -54,16 +51,18 @@ cdef class TIPP:
         self._lock_in = lock_in
         self._min_risk_req = min_risk_req
         self._min_capital_req = min_capital_req
-        self._freq = freq
         self._portfolio = None
         self._ref_capital = None
         self._margin_trigger = None
         self._floor = None
-        self._compounded_period = self._rr.size / self._freq
 
     @property
     def capital(self) -> float:
         return self._capital
+
+    @property
+    def multiplier(self) -> float:
+        return self._multiplier
 
     @property
     def portfolio(self) -> np.ndarray | None:
@@ -122,27 +121,27 @@ cdef class TIPP:
             DTYPE_t[::1] floor_view
             DTYPE_t lock_in
             DTYPE_t min_capital_req
-            DTYPE_t freq
             DTYPE_t compounded_period
 
+        # Calculate initial discount factor
         n = self._rr.shape[0]
+        compounded_period = n / OPEN_DAYS_PER_YEAR
+        discount = pow(1 + rf_view[0], compounded_period)
 
         # Get memoryviews for efficient access
-        portfolio_view = np.ones(n, dtype=np.float64) * self._capital
+        portfolio_view = np.ones(n, dtype=np.float64) * (self._capital * self._min_risk_req * (1 + self._rr[0]) + self._capital * (1 - self._min_risk_req) * (1 + self._rf[0]) ** (1 / OPEN_DAYS_PER_YEAR))
         ref_capital_view = np.ones(n, dtype=np.float64) * self._capital
         margin_trigger_view = np.zeros(n, dtype=np.float64)
-        floor_view = np.ones(n, dtype=np.float64) * (self._capital * self._min_capital_req)
-        compounded_period = n / self._freq
-        freq = self._freq
+        floor_view =  np.ones(self._rr.size, dtype=np.float64) * self._capital * self._min_capital_req / discount
         min_capital_req = self._min_capital_req
         multiplier = self._multiplier
         lock_in = self._lock_in
         min_risk_req = self._min_risk_req
 
-        # Calculate discount factor once
-        discount_factor = pow(1 + rf_view[0] * freq / OPEN_DAYS_PER_YEAR, compounded_period)
-        
         for i in range(1, n):
+            compounded_period -= 1 / OPEN_DAYS_PER_YEAR
+            discount = pow(1 + rf_view[i], compounded_period)
+
             # Update reference capital
             if portfolio_view[i-1] >= (1 + lock_in) * ref_capital_view[i-1]:
                 ref_capital_view[i] = portfolio_view[i-1]
@@ -150,8 +149,8 @@ cdef class TIPP:
                 ref_capital_view[i] = ref_capital_view[i-1]
 
             # Update floor
-            floor_cap = portfolio_view[i-1] * min_capital_req / discount_factor
-            if floor_cap > floor_view[i-1]:
+            floor_cap = portfolio_view[i-1] * min_capital_req / discount
+            if floor_cap > floor_view[i - 1]:
                 floor_view[i] = floor_cap
             else:
                 floor_view[i] = floor_view[i-1]
@@ -160,7 +159,7 @@ cdef class TIPP:
             if portfolio_view[i-1] < ref_capital_view[i-1] * min_capital_req:
                 capital_to_inject = ref_capital_view[i-1] * min_capital_req - portfolio_view[i-1]
                 ref_capital_view[i] = ref_capital_view[i-1] - capital_to_inject
-                portfolio_view[i-1] += capital_to_inject
+                portfolio_view[i - 1] += capital_to_inject
                 margin_trigger_view[i] = capital_to_inject
 
             # Calculate allocations
@@ -172,10 +171,7 @@ cdef class TIPP:
             risk_free_allocation = portfolio_view[i-1] - risk_allocation
 
             # Update portfolio
-            portfolio_view[i] = risk_allocation * (1 + rr_view[i]) + risk_free_allocation * (1 + rf_view[i])
-    
-            compounded_period -= 1 / freq
-            discount_factor = pow(1 + rf_view[i] * freq / OPEN_DAYS_PER_YEAR, compounded_period)
+            portfolio_view[i] = risk_allocation * (1 + rr_view[i]) + risk_free_allocation * pow(1 + rf_view[i], 1 / OPEN_DAYS_PER_YEAR)
 
         self._portfolio = np.asarray(portfolio_view)
         self._ref_capital = np.asarray(ref_capital_view)
@@ -192,7 +188,6 @@ cdef class TIPP:
             Minimum risk requirement: {self._min_risk_req:.2%}
             Minimum capital requirement: {self._min_capital_req:.2%}
             Multiplier: {self._multiplier:.2f}
-            Frequency: {self._freq:.0f} days
             """.strip()
 
     def __repr__(self) -> str:
@@ -202,6 +197,5 @@ cdef class TIPP:
             f"multiplier={self._multiplier:.2f}, "
             f"lock_in={self._lock_in:.2%}, "
             f"min_risk_req={self._min_risk_req:.2%}, "
-            f"min_capital_req={self._min_capital_req:.2%}, "
-            f"freq={self._freq:.0f})"
+            f"min_capital_req={self._min_capital_req:.2%})"
         )
