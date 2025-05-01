@@ -1,12 +1,13 @@
 from typing import Optional
+
 import numpy as np
 import scipy
 from statsmodels.distributions.empirical_distribution import ECDF  # type: ignore
 
 
-class Ratios:
+class Metrics:
     """
-    Compute the ratios of the investment
+    Compute metrics and ratios for a portfolio
     """
 
     def __init__(

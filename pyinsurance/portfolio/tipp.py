@@ -1,11 +1,11 @@
-from typing import Optional
 import numpy as np
-from numpy.typing import NDArray
+
+from pyinsurance.portfolio.base import TIPPBase
 
 OPEN_DAYS_PER_YEAR = 252.0
 
 
-class TIPP:
+class TIPP(TIPPBase):
     """Time Invariant Portfolio Protection (TIPP) implementation.
 
     This class implements the core TIPP strategy logic, managing the dynamic
@@ -28,93 +28,6 @@ class TIPP:
         compounded_period: Compounded period
         discount: Discount at each time step
     """
-
-    def __init__(
-        self,
-        capital: float,
-        multiplier: float,
-        rr: NDArray[np.float64],
-        rf: NDArray[np.float64],
-        lock_in: float,
-        min_risk_req: float,
-        min_capital_req: float,
-        freq: float = 252,
-    ) -> None:
-        """
-        Initialize TIPP model with parameters.
-
-        Args:
-            capital (float): Initial investment capital
-            floor (float): Minimum acceptable portfolio value (protection level)
-            multiplier (float): Risk multiplier that determines the aggressiveness of the strategy
-            rr (np.ndarray): Return rate of the risky asset
-            rf (np.ndarray): Risk-free rate of return
-            br (np.ndarray): Benchmark return rate
-            lock_in (float): Lock-in percentage for gains (0-1)
-            min_risk_req (float): Minimum risk requirement for the portfolio
-            min_capital_req (float): Minimum capital requirement for the portfolio
-            freq (float, optional): Number of trading days per year. Defaults to 252.
-
-        Note:
-            The TIPP strategy dynamically adjusts the allocation between risky and safe assets
-            to protect against downside risk while maintaining upside potential. The floor
-            represents the minimum acceptable portfolio value, and the multiplier determines
-            how aggressively the strategy responds to market movements.
-        """
-
-        # Validate that all rate parameters have the same shape (1, N)
-        assert rr.shape == rf.shape, "All rate parameters must have the same shape"
-        assert len(rr.shape) == 1, "Rate parameters must have shape (N,)"
-
-        self._capital = capital
-        self._multiplier = multiplier
-        self._rr = rr
-        self._rf = rf
-        self._lock_in = lock_in
-        self._min_risk_req = min_risk_req
-        self._min_capital_req = min_capital_req
-        self._freq = freq
-
-        self._portfolio: Optional[NDArray[np.float64]] = None
-        self._ref_capital: Optional[NDArray[np.float64]] = None
-        self._margin_trigger: Optional[NDArray[np.float64]] = None
-        self._floor: Optional[NDArray[np.float64]] = None
-
-    @property
-    def portfolio(self) -> np.ndarray | None:
-        return self._portfolio
-
-    @property
-    def ref_capital(self) -> np.ndarray | None:
-        return self._ref_capital
-
-    @property
-    def margin_trigger(self) -> np.ndarray | None:
-        return self._margin_trigger
-
-    @property
-    def floor(self) -> np.ndarray | None:
-        return self._floor
-
-    @property
-    def min_risk_req(self) -> float | None:
-        return self._min_risk_req
-
-    @property
-    def min_capital_req(self) -> float | None:
-        return self._min_capital_req
-
-    @property
-    def lock_in(self) -> float | None:
-        return self._lock_in
-
-    @property
-    def rr(self) -> np.ndarray | None:
-        return self._rr
-
-    @property
-    def rf(self) -> np.ndarray | None:
-        return self._rf
 
     def run(self) -> None:
         """Run the TIPP strategy.
@@ -142,7 +55,8 @@ class TIPP:
             else:
                 self._ref_capital[i] = self._ref_capital[i - 1]
 
-            floor_cap = self._portfolio[i - 1] * discount
+            floor_cap = self._portfolio[i - 1] * self._min_capital_req / discount
+            print(self._min_capital_req)
 
             if self._should_update_floor(floor_cap, i - 1):
                 self._floor[i] = floor_cap

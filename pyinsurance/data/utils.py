@@ -1,7 +1,8 @@
+import logging
 from pathlib import Path
 from typing import Union
+
 import pandas as pd
-import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyinsurance"
-version = "0.1.0"
+version = "1.0.0"
 description = "Insurance portfolio management tools"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = [
+dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "mypy>=1.0.0",
@@ -33,7 +33,7 @@ package-dir = {"pyinsurance" = "pyinsurance"}
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["pyinsurance*"]
+include = ["pyinsurance*", "pyinsurance/*.pyi"]
 exclude = ["tests*", "docs*", "examples*"]
 
 [tool.cython]

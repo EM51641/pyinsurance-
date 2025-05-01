@@ -1,14 +1,18 @@
-from setuptools import setup, Extension  # type: ignore
 import numpy as np
-
-extensions = [
-    Extension(
-        "pyinsurance.portfolio._tipp",
-        ["pyinsurance/portfolio/_tipp.pyx"],
-        include_dirs=[np.get_include()],
-    ),
-]
+from Cython.Build import cythonize  # type: ignore
+from setuptools import setup  # type: ignore
 
 setup(
-    ext_modules=extensions,
+    ext_modules=cythonize(
+        "pyinsurance/portfolio/_tipp.pyx",
+        compiler_directives={
+            "language_level": "3",
+            "boundscheck": False,
+            "wraparound": False,
+            "cdivision": True,
+            "nonecheck": False,
+            "initializedcheck": False,
+        },
+    ),
+    include_dirs=[np.get_include()],
 )

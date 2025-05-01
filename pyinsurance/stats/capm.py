@@ -1,6 +1,7 @@
 from typing import Optional
-import statsmodels.api as sm  # type: ignore
+
 import numpy as np
+import statsmodels.api as sm  # type: ignore
 
 
 class CAPM:

@@ -1,10 +1,3 @@
-# cython: language_level=3
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: cdivision=True
-# cython: nonecheck=False
-# cython: initializedcheck=False
-
 import numpy as np
 cimport numpy as np
 from libc.math cimport fmax, fmin, pow
@@ -69,6 +62,10 @@ cdef class TIPP:
         self._compounded_period = self._rr.size / self._freq
 
     @property
+    def capital(self) -> float:
+        return self._capital
+
+    @property
     def portfolio(self) -> np.ndarray | None:
         """Get the portfolio value array."""
         return self._portfolio
@@ -89,30 +86,30 @@ cdef class TIPP:
         return self._floor
 
     @property
-    def min_risk_req(self) -> float | None:
+    def min_risk_req(self) -> float:
         return self._min_risk_req
 
     @property
-    def min_capital_req(self) -> float | None:
+    def min_capital_req(self) -> float:
         return self._min_capital_req
 
     @property
-    def lock_in(self) -> float | None:
+    def lock_in(self) -> float:
         return self._lock_in
 
     @property
-    def multiplier(self) -> float | None:
+    def multiplier(self) -> float:
         return self._multiplier
 
     @property
-    def rr(self) -> np.ndarray | None:
+    def rr(self) -> np.ndarray:
         return self._rr
 
     @property
-    def rf(self) -> np.ndarray | None:
+    def rf(self) -> np.ndarray:
         return self._rf
 
-    def run(self):
+    def run(self) -> None:
         """Run the TIPP strategy simulation."""
         cdef:
             Py_ssize_t i, n
@@ -153,7 +150,7 @@ cdef class TIPP:
                 ref_capital_view[i] = ref_capital_view[i-1]
 
             # Update floor
-            floor_cap = portfolio_view[i-1] * discount_factor
+            floor_cap = portfolio_view[i-1] * min_capital_req / discount_factor
             if floor_cap > floor_view[i-1]:
                 floor_view[i] = floor_cap
             else:
@@ -173,7 +170,7 @@ cdef class TIPP:
                 min_risk_req * portfolio_view[i-1]
             )
             risk_free_allocation = portfolio_view[i-1] - risk_allocation
-            
+
             # Update portfolio
             portfolio_view[i] = risk_allocation * (1 + rr_view[i]) + risk_free_allocation * (1 + rf_view[i])
     
@@ -184,3 +181,27 @@ cdef class TIPP:
         self._ref_capital = np.asarray(ref_capital_view)
         self._margin_trigger = np.asarray(margin_trigger_view)
         self._floor = np.asarray(floor_view)
+
+    def __str__(self) -> str:
+        """Return a formatted string representation of the TIPP model."""
+        return f"""
+            TIPP Model Summary
+            -----------------
+            Capital: {self._capital:.2f}
+            Lock-in rate: {self._lock_in:.2%}
+            Minimum risk requirement: {self._min_risk_req:.2%}
+            Minimum capital requirement: {self._min_capital_req:.2%}
+            Multiplier: {self._multiplier:.2f}
+            Frequency: {self._freq:.0f} days
+            """.strip()
+
+    def __repr__(self) -> str:
+        """Return a concise string representation of the TIPP model."""
+        return (
+            f"TIPP(capital={self._capital:.2f}, "
+            f"multiplier={self._multiplier:.2f}, "
+            f"lock_in={self._lock_in:.2%}, "
+            f"min_risk_req={self._min_risk_req:.2%}, "
+            f"min_capital_req={self._min_capital_req:.2%}, "
+            f"freq={self._freq:.0f})"
+        )
