@@ -34,7 +34,7 @@ cdef class TIPP:
         DTYPE_t lock_in,
         DTYPE_t min_risk_req,
         DTYPE_t min_capital_req
-    ):
+    ) -> None:
         """Initialize TIPP model with parameters."""
 
         # Validate that all rate parameters have the same length
@@ -56,57 +56,49 @@ cdef class TIPP:
         self._margin_trigger = None
         self._floor = None
 
-    @property
-    def capital(self) -> float:
-        return self._capital
+    property capital:
+        def __get__(self):
+            return self._capital
 
-    @property
-    def multiplier(self) -> float:
-        return self._multiplier
+    property multiplier:
+        def __get__(self):
+            return self._multiplier
 
-    @property
-    def portfolio(self) -> np.ndarray | None:
-        """Get the portfolio value array."""
-        return self._portfolio
+    property portfolio:
+        def __get__(self):
+            return self._portfolio
 
-    @property
-    def ref_capital(self) -> np.ndarray | None:
-        """Get the reference capital array."""
-        return self._ref_capital
+    property ref_capital:
+        def __get__(self):
+            return self._ref_capital
 
-    @property
-    def margin_trigger(self) -> np.ndarray | None:
-        """Get the margin trigger array."""
-        return self._margin_trigger
+    property margin_trigger:
+        def __get__(self):
+            return self._margin_trigger
 
-    @property
-    def floor(self) -> np.ndarray | None:
-        """Get the floor array."""
-        return self._floor
+    property floor:
+        def __get__(self):
+            return self._floor
 
-    @property
-    def min_risk_req(self) -> float:
-        return self._min_risk_req
+    property min_risk_req:
+        def __get__(self):
+            return self._min_risk_req
 
-    @property
-    def min_capital_req(self) -> float:
-        return self._min_capital_req
+    property min_capital_req:
+        def __get__(self):
+            return self._min_capital_req
 
-    @property
-    def lock_in(self) -> float:
-        return self._lock_in
+    property lock_in:
+        def __get__(self):
+            return self._lock_in
 
-    @property
-    def multiplier(self) -> float:
-        return self._multiplier
+    property rr:
+        def __get__(self):
+            return self._rr
 
-    @property
-    def rr(self) -> np.ndarray:
-        return self._rr
-
-    @property
-    def rf(self) -> np.ndarray:
-        return self._rf
+    property rf:
+        def __get__(self):
+            return self._rf
 
     def run(self) -> None:
         """Run the TIPP strategy simulation."""

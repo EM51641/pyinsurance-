@@ -15,7 +15,6 @@ class TIPP:
         lock_in: float,
         min_risk_req: float,
         min_capital_req: float,
-        freq: float = 252,
     ) -> None:
         """Initialize TIPP model with parameters."""
         ...
@@ -68,6 +67,11 @@ class TIPP:
     @property
     def rf(self) -> NDArray[np.float64]:
         """Get the risk-free rate array."""
+        ...
+
+    @property
+    def capital(self) -> float:
+        """Get the capital."""
         ...
 
     def run(self) -> None:

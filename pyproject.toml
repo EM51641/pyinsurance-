@@ -35,8 +35,3 @@ package-dir = {"pyinsurance" = "pyinsurance"}
 where = ["."]
 include = ["pyinsurance*", "pyinsurance/*.pyi"]
 exclude = ["tests*", "docs*", "examples*"]
-
-[tool.cython]
-language_level = 3
-compiler_directives.boundscheck = false
-compiler_directives.wraparound = false
