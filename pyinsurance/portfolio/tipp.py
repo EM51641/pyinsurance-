@@ -14,7 +14,8 @@ class TIPP(TIPPBase):
 
     Attributes:
         capital: Initial investment capital
-        multiplier: Risk multiplier that determines the aggressiveness of the strategy
+        multiplier: Risk multiplier that determines the aggressiveness
+                    of the strategy
         rr: Return rate of the risky asset
         rf: Risk-free rate of return
         lock_in: Lock-in percentage for gains (0-1)

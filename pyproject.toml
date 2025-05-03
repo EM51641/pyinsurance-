@@ -35,3 +35,6 @@ package-dir = {"pyinsurance" = "pyinsurance"}
 where = ["."]
 include = ["pyinsurance*", "pyinsurance/*.pyi"]
 exclude = ["tests*", "docs*", "examples*"]
+
+[tool.black]
+line-length = 88
