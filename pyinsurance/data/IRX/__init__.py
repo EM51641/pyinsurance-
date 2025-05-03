@@ -6,6 +6,7 @@ from pyinsurance.data.utils import load_file
 def load() -> DataFrame:
     """
     Load the irx data used in the examples
+
     Returns
     -------
     data : DataFrame
