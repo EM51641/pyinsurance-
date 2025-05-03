@@ -2,7 +2,6 @@ import numpy as np
 from Cython.Build import cythonize  # type: ignore
 from setuptools import setup  # type: ignore
 
-# sdwfwesdsd
 setup(
     ext_modules=cythonize(
         "pyinsurance/portfolio/_tipp.pyx",
@@ -17,6 +16,3 @@ setup(
     ),
     include_dirs=[np.get_include()],
 )
-
-
-# adssd
