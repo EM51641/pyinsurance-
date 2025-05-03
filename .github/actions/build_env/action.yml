@@ -24,3 +24,4 @@ runs:
 
     - name: Install project
       run: uv sync --locked --all-extras --dev
+      shell: bash
