@@ -31,11 +31,6 @@ jobs:
 
         - name: Setup the environment
           uses: ./.github/actions/build
-          with:
-            python-version: "3.13"
-
-        - name: Install dependencies
-          run: uv sync --locked --all-extras --dev
 
         - name: Run linting
           run: |
@@ -50,11 +45,6 @@ jobs:
 
         - name: Setup the environment
           uses: ./.github/actions/build
-          with:
-            python-version: "3.13"
-
-        - name: Install dependencies
-          run: uv sync --locked --all-extras --dev
 
         - name: Run static analysis
           run: |
