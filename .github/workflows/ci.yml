@@ -25,6 +25,7 @@ jobs:
             uv run pytest --cov=pyinsurance --cov-report=xml
 
   lint:
+    
     runs-on: ubuntu-latest
     steps:
         - uses: actions/checkout@v4
