@@ -24,12 +24,21 @@ jobs:
       - name: Setup the environment
         uses: ./.github/actions/build_env
 
+      - name: Build package
+        run: uv build
+      
       - name: Install auditwheel
         run: |
           python -m pip install auditwheel
 
-      - name: Build package
-        run: uv build
+      - name: Repair wheel with auditwheel
+        run: |
+          for wheel in dist/*.whl; do
+            if [[ $wheel == *linux_x86_64* ]]; then
+              auditwheel repair $wheel --plat manylinux_2_28_x86_64 -w dist/
+              rm $wheel
+            fi
+          done
 
       - name: Upload dist files
         uses: actions/upload-artifact@v4
