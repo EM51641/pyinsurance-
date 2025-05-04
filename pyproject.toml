@@ -33,7 +33,7 @@ package-dir = {"pyinsurance" = "pyinsurance"}
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["pyinsurance*", "pyinsurance/*.pyi"]
+include = ["pyinsurance*", "pyinsurance/*.pyi", "pyinsurance/*.pyx"]
 exclude = ["tests*", "docs*", "examples*"]
 
 [tool.black]
