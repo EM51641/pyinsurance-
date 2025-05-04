@@ -22,6 +22,17 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
+    - name: Cache deps
+      id: cache-deps
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: ${{ runner.os }}-uv-${{ inputs.python-version }}-${{ hashFiles('**/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-${{ inputs.python-version }}-
+          ${{ runner.os }}-uv-
+
     - name: Install project
       run: uv sync --locked --all-extras --dev
       shell: bash
+      if: steps.cache-deps.outputs.cache-hit != 'true'
