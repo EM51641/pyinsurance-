@@ -1,0 +1,38 @@
+name: Release and Upload Python Package on PyPI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ci:
+    name: Call CI
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Release version
+    needs: [ci]
+    uses: ./.github/workflows/github_release.yml
+
+  deploy:
+    needs: [release]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup the environment
+        uses: ./.github/actions/build_env
+
+      - name: Build package
+        run: uv build 
+
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
