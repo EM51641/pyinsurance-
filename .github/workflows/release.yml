@@ -1,0 +1,52 @@
+name: Release and Upload Python Package on PyPI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ci:
+    name: Call CI
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    runs-on: ubuntu-latest
+    name: Release version
+    needs: [ci]
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: false
+          title: "Production Build"
+          files: |
+            LICENSE.txt
+            *.jar
+
+  deploy:
+    needs: [release]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup the environment
+        uses: ./.github/actions/build_env
+
+      - name: Build package
+        run: uv build 
+
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
