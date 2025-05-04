@@ -25,7 +25,7 @@ jobs:
             uv run pytest --cov=pyinsurance --cov-report=xml
 
   lint:
-    
+
     runs-on: ubuntu-latest
     steps:
         - uses: actions/checkout@v4
@@ -33,10 +33,16 @@ jobs:
         - name: Setup the environment
           uses: ./.github/actions/build_env
 
-        - name: Run linting
+        - name: Run flake8
           run: |
             uv run flake8 pyinsurance/ test/
+
+        - name: Run black
+          run: |
             uv run black --check pyinsurance/ test/
+
+        - name: Run isort
+          run: |
             uv run isort --check-only pyinsurance/ test/
 
   static-analysis:
@@ -49,4 +55,4 @@ jobs:
 
         - name: Run static analysis
           run: |
-            uv run mypy pyinsurance/ test/
+            uv run mypy pyinsurance
