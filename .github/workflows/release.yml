@@ -25,11 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup the environment
-        uses: ./.github/actions/build_env
-
-      - name: Build package
-        run: uv build 
+      - name: Download dist files
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
 
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@release/v1
