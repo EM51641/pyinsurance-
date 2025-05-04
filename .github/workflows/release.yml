@@ -13,55 +13,7 @@ jobs:
   release:
     name: Release version
     needs: [ci]
-    runs-on: ubuntu-latest
-  
-    permissions:
-      contents: write  # IMPORTANT: mandatory for making GitHub Releases
-      id-token: write  # IMPORTANT: mandatory for sigstore
-
-    steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
-          with:
-            fetch-depth: 0  # Required to get tag information
-
-        - name: Get version from pyproject.toml
-          id: get_version
-          run: |
-            VERSION=v$(grep -m 1 'version = ' pyproject.toml | cut -d '"' -f 2)
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "Current version: $VERSION"
-
-        - name: Download all the dists
-          uses: actions/download-artifact@v4
-          with:
-            name: python-package-distributions
-            path: dist/
-
-        - name: Sign the dists with Sigstore
-          uses: sigstore/gh-action-sigstore-python@v3.0.0
-          with:
-            inputs: >-
-              ./dist/*.tar.gz
-              ./dist/*.whl
-
-        - name: Create GitHub Release
-          env:
-            GITHUB_TOKEN: ${{ github.token }}
-          run: >-
-            gh release create
-            "$VERSION"
-            --repo "$GITHUB_REPOSITORY"
-            --title "Release ${{ steps.get_version.outputs.version }}"
-            --notes "$(cat doc/releases/$VERSION.md)"
-
-        - name: Upload artifact signatures to GitHub Release
-          env:
-            GITHUB_TOKEN: ${{ github.token }}
-          run: >-
-            gh release upload
-            "$VERSION" dist/**
-            --repo "$GITHUB_REPOSITORY"
+    uses: ./.github/workflows/github_release.yml
 
   deploy:
     needs: [release]
