@@ -1,29 +1,22 @@
-name: Release and Upload Python Package on PyPI
+name: Publish Python 🐍 distribution 📦 to PyPI
 
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
 
 jobs:
-  ci:
-    name: Call CI
-    uses: ./.github/workflows/ci.yml
-
-  release:
-    name: Release version
-    needs: [ci]
+  github-release:
+    name: >-
+      Sign the Python 🐍 distribution 📦 with Sigstore
+      and upload them to GitHub Release
     runs-on: ubuntu-latest
-  
+
     permissions:
-      contents: write  # IMPORTANT: mandatory for making GitHub Releases
-      id-token: write  # IMPORTANT: mandatory for sigstore
+      contents: write
+      id-token: write
 
     steps:
         - name: Checkout code
           uses: actions/checkout@v4
-          with:
-            fetch-depth: 0  # Required to get tag information
 
         - name: Get version from pyproject.toml
           id: get_version
@@ -58,29 +51,10 @@ jobs:
         - name: Upload artifact signatures to GitHub Release
           env:
             GITHUB_TOKEN: ${{ github.token }}
+          # Upload to GitHub Release using the `gh` CLI.
+          # `dist/` contains the built packages, and the
+          # sigstore-produced signatures and certificates.
           run: >-
             gh release upload
             "$VERSION" dist/**
             --repo "$GITHUB_REPOSITORY"
-
-  deploy:
-    needs: [release]
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup the environment
-        uses: ./.github/actions/build_env
-
-      - name: Build package
-        run: uv build 
-
-      - name: Publish package
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
